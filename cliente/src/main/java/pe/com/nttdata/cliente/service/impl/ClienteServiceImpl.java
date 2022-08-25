@@ -1,6 +1,9 @@
 package pe.com.nttdata.cliente.service.impl;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import pe.com.nttdata.cliente.controller.ClienteRequest;
 import pe.com.nttdata.cliente.dao.IClienteDao;
@@ -14,6 +17,7 @@ import pe.com.nttdata.clientequeues.rabbitmq.RabbitMQMessageProducer;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @AllArgsConstructor
 @Service
 public class ClienteServiceImpl implements IClienteService {
@@ -46,8 +50,10 @@ public class ClienteServiceImpl implements IClienteService {
         return clienteResponse;
     }
 
+    @CircuitBreaker(name = "validarclienteCB", fallbackMethod = "fallValidarclienteCB")
+    @Retry(name = "validarclienteRetry")
     public String validarCliente(Cliente cliente) {
-
+        log.info("Estoy en metodo validarCliente");
         ClienteCheckResponse clienteCheckResponse = clienteCheckClient.validarCliente(cliente.getId());
 
         if (clienteCheckResponse.esEstafador()) {
@@ -55,6 +61,10 @@ public class ClienteServiceImpl implements IClienteService {
         }
 
         return "OK";
+    }
+
+    public String fallValidarclienteCB(Cliente cliente, Exception e) {
+        return "NO_OK";
     }
 
     public void registrarNotificacion(Cliente cliente) {
