@@ -42,12 +42,22 @@ public class ClienteServiceImpl implements IClienteService {
                 ClienteCheckResponse.class,
                 clienteResponse.getId()
         );*/
-        ClienteCheckResponse clienteCheckResponse = clienteCheckClient.validarCliente(clienteResponse.getId());
+
+        return clienteResponse;
+    }
+
+    public String validarCliente(Cliente cliente) {
+
+        ClienteCheckResponse clienteCheckResponse = clienteCheckClient.validarCliente(cliente.getId());
 
         if (clienteCheckResponse.esEstafador()) {
             throw new IllegalStateException("Cliente es un estafador!!");
         }
 
+        return "OK";
+    }
+
+    public void registrarNotificacion(Cliente cliente) {
         NotificacionRequest notificacionRequest = new NotificacionRequest(
                 cliente.getId(),
                 cliente.getEmail(),
@@ -59,8 +69,6 @@ public class ClienteServiceImpl implements IClienteService {
                 "internal.exchange",
                 "internal.notification.routing-key"
         );
-
-        return clienteResponse;
     }
 
     public Cliente modificarCliente(ClienteRequest clienteRequest) {
